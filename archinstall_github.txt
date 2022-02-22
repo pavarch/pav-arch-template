@@ -1,0 +1,127 @@
+# setfont ter-132n
+
+
+# --------------------------------------------------------------------------------------------
+# PARTITIONER OCH ENHETER (Standard Rekommendation)
+# --------------------------------------------------------------------------------------------
+
+# sda1	boot	300M  (bootefi)
+# sda2	root	+35G  (root)
+# sda3	home        (home)
+
+#---------------------------------------------------------
+# Skapa filsystemen
+#---------------------------------------------------------
+# mkfs.vfat devsda1	BOOT
+# mkfs.ext4 devsda2	
+# mkfs.ext4 devsda3	HOME
+
+
+#---------------------------------------------------------
+# MONTERA PARTITIONER -
+#---------------------------------------------------------
+# mount devsda2 mnt
+# mkdir -p mnt{boot,home}
+# mount devsda1	mntboot
+# mount devsda3	mnthome
+# sysctl -w vm.swappiness=10   optimera swappiness, permanent
+(GÄLLER INTE VID SWAP-FIL, BARA SWAP PARTITION)
+
+
+#--------------------------------------------------------------------------------------------
+# INSTALLERA PAKET - Archlinux BASE
+#--------------------------------------------------------------------------------------------
+pacstrap mnt base linux linux-firmware git nano
+intel-ucode
+
+
+#--------------------------------------------------------------------------------------------  
+# GENERERA FILTABELL
+#--------------------------------------------------------------------------------------------  
+# genfstab -U /mnt >> /mnt/etc/fstab
+
+#--------------------------------------------------------------------------------------------  
+# SKAPA SWAP-FIL
+#--------------------------------------------------------------------------------------------
+# fallocate -l 2GB /swapfile
+# chmod 600 /swapfile
+# mkswap /swapfile
+# swapon /swapfile
+# nano /etc/fstab
+# add att BOTTOM of file_
+# /swapfile none swap 0 0
+
+#--------------------------------------------------------------------------------------------  
+# STÄLL IN TIDZONE
+#--------------------------------------------------------------------------------------------
+# ln -sf /usr/share/zoneinfo/Europe/Stockholm /etc/localtime
+# hwclock --systohc
+# nano /etc/locale.gen
+	# Uncomment (sv_SE.UTF-8)
+# locale-gen
+# nano /etc/locale.conf
+	#LANG=sv_SE.UTF-8
+# nano /etc/hostname
+	#add <hostmame>
+# nano /etc/hosts
+# add:
+	#127.0.0.1	localhost
+	#::1		localhost
+	#127.0.1.1	arch.localhost	arch
+
+#--------------------------------------------------------------------------------------------
+# SKAPA LÖSENORD OCH ANVÄNDARE
+#--------------------------------------------------------------------------------------------
+#passwd root or USER
+
+
+#--------------------------------------------------------------------------------------------
+# Archlinux-base UEFI Installation
+#--------------------------------------------------------------------------------------------
+
+pacman -Syyu
+
+# [LITE VERSION with PULSEAUDIO]
+pacman -S grub efibootmgr networkmanager network-manager-applet wireless_tools wpa_supplicant dialog os-prober mtools dosfstools base-devel linux-headers terminus-font
+
+# (WITH PIPEWIRE)
+pacman -S grub efibootmgr networkmanager network-manager-applet dialog wpa_supplicant mtools dosfstools reflector base-devel linux-headers avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils cups hplip alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion openssh rsync reflector acpi acpi_call tlp virt-manager qemu qemu-arch-extra edk2-ovmf bridge-utils dnsmasq vde2 openbsd-netcat iptables-nft ipset firewalld flatpak sof-firmware nss-mdns acpid os-prober ntfs-3g terminus-font pacman-contrib packagekit-qt5
+
+# (WITHOUT PIPEWIRE)
+pacman -S grub efibootmgr networkmanager jack2 pulseaudio network-manager-applet dialog wpa_supplicant mtools dosfstools reflector base-devel linux-headers avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils cups hplip alsa-utils bash-completion openssh rsync reflector acpi acpi_call tlp virt-manager qemu qemu-arch-extra edk2-ovmf bridge-utils dnsmasq vde2 openbsd-netcat iptables-nft ipset firewalld flatpak sof-firmware nss-mdns acpid os-prober ntfs-3g terminus-font pacman-contrib packagekit-qt5
+
+#--------------------------------------------------------------------------------------------
+# INSTALLERA GRUB
+#--------------------------------------------------------------------------------------------
+#grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB
+#grub-mkconfig -o /boot/grub/grub.cfg
+
+
+#arch-chroot /mnt #NÄR FÄRDIG KONFIGURERAT GÅ TILL /mnt
+
+#--------------------------------------------------------------------------------------------
+#Installera grafikkord
+#--------------------------------------------------------------------------------------------
+# 1. Nvidia
+  # nvidia nvidia-utils nvidia-settings
+# Intel
+  # xf86-video-intel 
+    # # pacman -S --noconfirm xf86-video-intel vulkan-intel lib32-mesa libva-intel-driver
+
+#sudo nano et/mkinitcpio.conf
+
+# För nvidiakort
+	MODULES=(nvidia)
+# För amdgpu
+	MODULES=(amdgpu)
+# För intel
+	MODULES=(i915)
+
+#--------------------------------------------------------------------------------------------
+# i3 WINDOW MANAGER
+#--------------------------------------------------------------------------------------------
+sudo pacman -Syyu
+
+sudo pacman -S xorg xorg-xinit i3-wm i3lock i3status i3blocks dmenu terminator (termite)
+cp /etc/X11/xinitrc ~/.xinitrc
+#Sätt lokalt tangentbord #sudo setxkbmap se
